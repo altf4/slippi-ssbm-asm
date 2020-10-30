@@ -11,7 +11,7 @@
 .include "Common/Common.s"
 .include "Recording/Recording.s"
 
-.set PAYLOAD_LEN, 0x41
+.set PAYLOAD_LEN, 0x49
 .set EXI_BUF_LEN, PAYLOAD_LEN + 1
 
 .set STACK_FREE_SPACE, EXI_BUF_LEN + 0x20 # Add 0x20 to deal with byte alignment
@@ -286,6 +286,34 @@ stb r4, 0x3F(r3)
 load r4 0x804d6cf6
 lbz r4, 0(r4)
 stb r4, 0x40(r3)
+
+# CPU Level for all 4 players
+load r4 0x8048082F
+lbz r4, 0(r4)
+stb r4, 0x41(r3)
+load r4 0x80480853
+lbz r4, 0(r4)
+stb r4, 0x42(r3)
+load r4 0x80480877
+lbz r4, 0(r4)
+stb r4, 0x43(r3)
+load r4 0x8048089B
+lbz r4, 0(r4)
+stb r4, 0x44(r3)
+
+# Is Holding CPU Slider for all 4 players
+load r4 0x803F0E0E
+lbz r4, 0(r4)
+stb r4, 0x45(r3)
+load r4 0x803F0E32
+lbz r4, 0(r4)
+stb r4, 0x46(r3)
+load r4 0x803F0E56
+lbz r4, 0(r4)
+stb r4, 0x47(r3)
+load r4 0x803F0E7A
+lbz r4, 0(r4)
+stb r4, 0x48(r3)
 
 #------------- Transfer Buffer ------------
 # r3 is the buffer arg, but it's already set
