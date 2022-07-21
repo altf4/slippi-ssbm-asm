@@ -152,20 +152,36 @@ stb r3, 0x6(r4)
 ################################################################################
 # Set up Zelda to select Sheik as default
 ################################################################################
+.set REG_IconData, 20
+.set REG_IconNum, 21
+.set REG_Count, 22
 
 # get CSS icon data
-branchl r12,FN_GetCSSIconData
-mr r4,r3
-# get zelda icon ID's external ID
-li r3, 15
-mulli	r3, r3, 28
-add	r4, r3, r4
+  branchl r12,FN_GetCSSIconData
+  mr REG_IconData,r3
+# get icon num
+  branchl r12,FN_GetCSSIconNum
+  mr REG_IconNum,r3
+# init search
+  li REG_Count, 0
+  b ZeldaSearch_Check
+ZeldaSearch_Loop:
+# check for zelda
+  lbz	r3, 0x00DD (REG_IconData) # char id
+  cmpwi r3,0x12
+  bne ZeldaSearch_Inc
 # store sheik's ID
-li r3,0x13
-stb	r3, 0x00DD (r4) # char id
+  li r3,0x13
+  stb	r3, 0x00DD (REG_IconData) # char id
+  b ZeldaSearch_End
+ZeldaSearch_Inc:
+  addi REG_Count,REG_Count,1
+  addi REG_IconData,REG_IconData,28
+ZeldaSearch_Check:
+  cmpw REG_Count,REG_IconNum
+  blt ZeldaSearch_Loop
+ZeldaSearch_End:
 
-#load r4, 0x803f0cc8
-#stb r3, 0x1(r4)
 
 restore
 blr
@@ -648,6 +664,7 @@ blrl
 SplashScenePrep:
 .set REG_VS_SSS_DATA, 31
 .set REG_MSRB_ADDR, 30
+.set REG_PLAYER_IDX, 29
 
 backup
 
@@ -658,6 +675,35 @@ mr REG_MSRB_ADDR, r3
 
 lwz	REG_VS_SSS_DATA, -0x77C0 (r13)
 addi	REG_VS_SSS_DATA, REG_VS_SSS_DATA, 1424 + 0x8   # adding 0x8 to skip past some unk stuff
+
+# Overwrite SSS Data colors for teams
+lbz r3, OFST_R13_ONLINE_MODE(r13)
+cmpwi r3, ONLINE_MODE_TEAMS
+bne SKIP_CHAR_COLOR_OVERWRITE
+
+li REG_PLAYER_IDX, 0
+
+CHAR_COLOR_OVERWRITE_LOOP_START:
+# Load the team ID + 1 for team index and character ID to pass to function to get costume ID
+mulli r5, REG_PLAYER_IDX, 0x24
+addi r3, r5, 0x69
+lbzx r3, REG_VS_SSS_DATA, r3 # Loads team ID
+addi r3, r3, 1
+addi r4, r5, 0x60
+lbzx r4, REG_VS_SSS_DATA, r4 # Loads character ID
+branchl r12, FN_GetTeamCostumeIndex # Loads costume ID into r3
+
+# Write costume ID 
+mulli r4, REG_PLAYER_IDX, 0x24
+addi r4, r4, 0x63
+stbx r3, REG_VS_SSS_DATA, r4
+
+# Increment port
+addi REG_PLAYER_IDX, REG_PLAYER_IDX, 1
+cmpwi REG_PLAYER_IDX, 4
+blt CHAR_COLOR_OVERWRITE_LOOP_START
+
+SKIP_CHAR_COLOR_OVERWRITE:
 
 #Copy Splash Data
 load  r3,0x80490888
@@ -833,7 +879,7 @@ li  r3,4
 branchl r12,0x80017700
 
 # Clear ssm queue
-li	r3, 28
+li	r3, 0x1c  # 0x10 = single player sounds, 0x8 = stage sounds, 0x4 = fighter sounds
 branchl	r12, 0x80026F2C
 
 # Load fighters' ssm files
@@ -845,14 +891,15 @@ mr REG_CURR, REG_VS_SSS_DATA
 add	REG_CURR, REG_CURR, r0
 CSSSceneDecide_SSMLoop:
 # Get fighter's external ID
-lbz	r3, 0x0060 (REG_CURR)
-extsb	r3, r3
-cmpwi r3,33
+branchl r12,FN_GetFighterNum
+lbz	r4, 0x0060 (REG_CURR)
+extsb	r4, r4
+cmpw r4,r3
 beq CSSSceneDecide_SSMIncLoop
 # Get fighter's ssm ID
-load r4,0x803bb3c0
-mulli r3,r3,0x10
-lbzx r3,r3,r4
+li r3,0   # fighter
+# r4 already contains fighter index
+branchl r12,FN_GetSSMIndex
 branchl r12,FN_RequestSSM   # queue it
 CSSSceneDecide_SSMIncLoop:
 addi	REG_COUNT, REG_COUNT, 1
@@ -862,9 +909,9 @@ blt+	 CSSSceneDecide_SSMLoop
 # Get stage's ssm file index
 lhz r3, 0xE (REG_VS_SSS_DATA)
 branchl r12,0x8022519c  # get internal ID
-load r4,0x803bb6b0
-mulli r3,r3,0x3
-lbzx r3,r3,r4
+mr r4,r3  # stage index
+li r3,1   # stage
+branchl r12,FN_GetSSMIndex
 branchl r12,FN_RequestSSM   # queue it
 # set to load
 branchl r12, 0x80027168
@@ -903,6 +950,10 @@ mr  r3,REG_VS_SSS_DATA
 addi r4,REG_MSRB_ADDR, MSRB_GAME_INFO_BLOCK    #
 li  r5,0x60 + (0x24*6)  #match data + player data
 branchl r12,memcpy
+
+# Adjust null ID
+mr  r3,REG_VS_SSS_DATA
+branchl r12,FN_AdjustNullID
 
 # Write data for left character
 

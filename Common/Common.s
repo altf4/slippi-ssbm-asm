@@ -39,6 +39,10 @@ ori \reg, \reg, \address @l
 lbz \reg, 0(\reg)
 .endm
 
+.macro bp
+branchl r12, 0x8021b2d8
+.endm
+
 .set BKP_FREE_SPACE_OFFSET, 0x38 # This is where the free space in our stack starts
 
 .macro backup space=0x78
@@ -74,7 +78,7 @@ addi r1,r1,0x100
 mtlr r0
 .endm
 
-.macro logf level, str, arg1="nop", arg2="nop", arg3="nop", arg4="nop", arg5="nop"
+.macro logf level, str, arg1="nop", arg2="nop", arg3="nop", arg4="nop", arg5="nop", arg6="nop"
 b 1f
 0:
 blrl
@@ -90,6 +94,7 @@ backupall
 \arg3
 \arg4
 \arg5
+\arg6
 
 lwz r3, OFST_R13_SB_ADDR(r13) # Buf to use as EXI buf
 addi r3, r3, 3
@@ -114,6 +119,31 @@ branchl r12, FN_EXITransferBuffer
 restoreall
 .endm
 
+.macro oslogf str, arg1="nop", arg2="nop", arg3="nop", arg4="nop", arg5="nop"
+b 1f
+0:
+blrl
+.string "\str"
+.align 2
+
+1:
+backupall
+
+# Set up args to log
+\arg1
+\arg2
+\arg3
+\arg4
+\arg5
+
+# Call OSReport
+bl 0b
+mflr r3
+branchl r12, 0x803456a8 # OSReport
+
+restoreall
+.endm
+
 .macro getMinorMajor reg
 lis \reg, 0x8048 # load address to offset from for scene controller
 lwz \reg, -0x62D0(\reg) # Load from 0x80479D30 (scene controller)
@@ -125,9 +155,14 @@ lis \reg, 0x8048 # load address to offset from for scene controller
 lbz \reg, -0x62D0(\reg) # Load byte from 0x80479D30 (major ID)
 .endm
 
+.macro loadGlobalFrame reg
+lis \reg, 0x8048
+lwz \reg, -0x62A0(\reg)
+.endm
+
 # This macro takes in an address that is expected to have a branch instruction. It will set
 # r3 to the address being branched to. This will overwrite r3 and r4
-.macro computeBranchTargetAddress address
+.macro computeBranchTargetAddress reg address
 load r3, \address
 lwz r4, 0(r3) # Get branch instruction which contains offset
 
@@ -139,7 +174,7 @@ rlwinm r5, r5, 16, 0xFFFF0000
 # Extract last 2 bytes, combine with top half, and then add to base address to get result
 rlwinm r4, r4, 0, 0xFFFC # Use 0xFFFC because the last bit is used for link
 or r4, r4, r5
-add r3, r3, r4
+add \reg, r3, r4
 .endm
 
 ################################################################################
@@ -163,12 +198,17 @@ add r3, r3, r4
 .set FN_LoadChatMessageProperties,0x800056ac
 .set FN_GetTeamCostumeIndex,0x800056b0
 .set FN_GetCSSIconData,0x800056b8
+.set FN_AdjustNullID,0x80005694
+.set FN_CheckAltStageName,0x80005690
+.set FN_GetCSSIconNum,0x80005698
+.set FN_LoadPremadeText, 0x800056a4
+.set FN_GetSSMIndex,0x800056a0
+.set FN_GetFighterNum,0x8000569c
 .set FN_CSSUpdateCSP,0x800056bc
 .set FN_RequestSSM,0x800056a8
 .set FN_GetCommonMinorID,0x8000561c
 # available addresses for static functions
-# 0x800056a4
-.set FN_LoadPremadeText, 0x800056a4
+# 0x8000568C
 
 # Online static functions
 .set FN_CaptureSavestate,0x80005608
@@ -190,7 +230,7 @@ add r3, r3, r4
 
 ## GObj functions
 .set GObj_Create,0x803901f0 #(obj_type,subclass,priority)
-.set GObj_Initialize,0x80390b68 #void (*GObj_AddUserData)(GOBJ *gobj, int userDataKind, void *destructor, void *userData) = (void *)0x80390b68;
+.set GObj_AddUserData,0x80390b68 #void (*GObj_AddUserData)(GOBJ *gobj, int userDataKind, void *destructor, void *userData) = (void *)0x80390b68;
 .set GObj_Destroy,0x80390228
 .set GObj_AddProc,0x8038fd54 # (obj,func,priority)
 .set GObj_RemoveProc,0x8038fed4
@@ -302,6 +342,7 @@ add r3, r3, r4
 .set SinglePlayerModeCheck,0x8016b41c
 .set CheckIfGameEnginePaused,0x801a45e8
 .set Inputs_GetPlayerHeldInputs,0x801a3680
+.set Inputs_GetPlayerInstantInputs,0x801A36A0
 .set Rumble_StoreRumbleFlag,0x8015ed4c
 .set Audio_AdjustMusicSFXVolume,0x80025064
 .set DiscError_ResumeGame,0x80024f6c
@@ -342,7 +383,8 @@ add r3, r3, r4
 .set CONST_SlippiCmdSendChatMessage,0xBB
 .set CONST_SlippiCmdGetNewSeed,0xBC
 .set CONST_SlippiCmdReportMatch,0xBD
-
+.set CONST_SlippiCmdSendNameEntryIndex,0xBE
+.set CONST_SlippiCmdNameEntryAutoComplete,0xBF
 # For Slippi file loads
 .set CONST_SlippiCmdFileLength, 0xD1
 .set CONST_SlippiCmdFileLoad, 0xD2
@@ -378,6 +420,25 @@ add r3, r3, r4
 .set HideWaitingForGameAddress, RtocAddress + HideWaitingForGame
 .set CFOptionsAddress, RtocAddress - ControllerFixOptions
 .set GeckoHeapPtr, 0x80005600
+
+# Internal scenes
+.set SCENE_TRAINING_CSS, 0x001C
+.set SCENE_TRAINING_SSS, 0x011C
+.set SCENE_TRAINING_IN_GAME, 0x021C
+
+.set SCENE_VERSUS_CSS, 0x0002
+.set SCENE_VERSUS_SSS, 0x0102
+.set SCENE_VERSUS_IN_GAME, 0x0202
+.set SCENE_VERSUS_SUDDEN_DEATH, 0x0302
+
+.set SCENE_TARGETS_CSS, 0x000F
+.set SCENE_TARGETS_IN_GAME, 0x010F
+
+.set SCENE_HOMERUN_CSS, 0x0020
+.set SCENE_HOMERUN_IN_GAME, 0x0120
+
+# Playback scene
+.set SCENE_PLAYBACK_IN_GAME, 0x010E
 
 ################################################################################
 # Offsets from r13

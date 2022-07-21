@@ -4,11 +4,6 @@
 # - Handle situation where a game ends while still predicting inputs, probably
 #   wouldn't want to trigger a game end until all inputs have been received
 
-.macro loadGlobalFrame reg
-lis \reg, 0x8048
-lwz \reg, -0x62A0(\reg)
-.endm
-
 ################################################################################
 # Offsets from r13
 ################################################################################
@@ -23,14 +18,13 @@ lwz \reg, -0x62A0(\reg)
 .set OFST_R13_ISPAUSE,-0x5038 # byte, client paused bool (originally used for tournament mode @ 8019b8e4)
 .set OFST_R13_ISWINNER,-0x5037 # byte, used to know if the player won the previous match
 .set OFST_R13_CHOSESTAGE,-0x5036 # bool, used to know if the player has selected a stage
+.set OFST_R13_NAME_ENTRY_INDEX_FLAG,-0x5035 # byte, set to 1 if just entered name entry. Rsts direct code index.
 .set OFST_R13_USE_PREMADE_TEXT,-0x5014 # bool, used to make Text_CopyPremadeTextDataToStruct load text data from dolphin
 .set OFST_R13_ISWIDESCREEN,-0x5020 # bool, used to make Text_CopyPremadeTextDataToStruct load text data from dolphin
-
 # r13 offsets used in tournament mode (not sure if completely safe though)
 # -0x5040 (r13)
 # -0x5068 (r13)
 # -0x7510 (r13)
-
 
 .set CSSDT_BUF_ADDR, 0x80005614
 
@@ -47,7 +41,18 @@ lwz \reg, -0x62A0(\reg)
 .set MIN_DELAY_FRAMES, 1
 .set MAX_DELAY_FRAMES, 15
 .set ROLLBACK_MAX_FRAME_COUNT, 7
-.set PLAYER_MAX_INPUT_SIZE, PAD_REPORT_SIZE * ROLLBACK_MAX_FRAME_COUNT
+
+# I don't know exactly how long the local input buffer has to be but in very rare cases with a length
+# of ROLLBACK_MAX_FRAME_COUNT we could overflow into the negative indices:
+# [3975] Prior to local input copy. END_FRAME: 3983, LOCAL_INPUTS_IDX: 0
+# [3975] Copying local inputs for rollback. Idx: -2, Offset: -24
+.set LOCAL_INPUTS_COUNT, 2 * ROLLBACK_MAX_FRAME_COUNT
+
+# Predicted input buffer might be able to bet ROLLBACK_MAX_FRAME_COUNT long but I'm not sure
+.set PREDICTED_INPUTS_COUNT, 2 * ROLLBACK_MAX_FRAME_COUNT
+
+# This one should be fine, Dolphin caps how many inputs it sends to the rollback limit
+.set RXB_INPUTS_COUNT, ROLLBACK_MAX_FRAME_COUNT
 
 .set UNFREEZE_INPUTS_FRAME, 84
 
@@ -93,7 +98,7 @@ lwz \reg, -0x62A0(\reg)
 0x7 = int8, righttrigger value
 0x8 = int8, unk
 0x9 = int8, unk
-0xA = int8, isConnected (0 = connected, -1 = disconnected)
+0xA = int8, isConnected (0 = connected, -1 = disconnected, -3 = stale?)
 0xB = padding
 */
 
@@ -197,7 +202,8 @@ lwz \reg, -0x62A0(\reg)
 .set ODB_IS_GAME_OVER, ODB_GAME_OVER_COUNTER + 1 # bool
 .set ODB_IS_DISCONNECTED, ODB_IS_GAME_OVER + 1 # bool
 .set ODB_IS_DISCONNECT_STATE_DISPLAYED, ODB_IS_DISCONNECTED + 1 # bool
-.set ODB_LAST_LOCAL_INPUTS, ODB_IS_DISCONNECT_STATE_DISPLAYED + 1 # PAD_REPORT_SIZE
+.set ODB_IS_FRAME_ADVANCE, ODB_IS_DISCONNECT_STATE_DISPLAYED + 1 # bool
+.set ODB_LAST_LOCAL_INPUTS, ODB_IS_FRAME_ADVANCE + 1 # PAD_REPORT_SIZE
 .set ODB_DELAY_FRAMES, ODB_LAST_LOCAL_INPUTS + PAD_REPORT_SIZE # u8
 .set ODB_DELAY_BUFFER_INDEX, ODB_DELAY_FRAMES + 1 # u8
 .set ODB_DELAY_BUFFER, ODB_DELAY_BUFFER_INDEX + 1 # PAD_REPORT_SIZE * MAX_DELAY_FRAMES
@@ -207,15 +213,16 @@ lwz \reg, -0x62A0(\reg)
 .set ODB_ROLLBACK_SHOULD_LOAD_STATE, ODB_ROLLBACK_IS_ACTIVE + 1 # bool
 .set ODB_ROLLBACK_END_FRAME, ODB_ROLLBACK_SHOULD_LOAD_STATE + 1 # s32
 .set ODB_ROLLBACK_LOCAL_INPUTS_IDX, ODB_ROLLBACK_END_FRAME + 4 # u8
-.set ODB_ROLLBACK_LOCAL_INPUTS, ODB_ROLLBACK_LOCAL_INPUTS_IDX + 1 # PAD_REPORT_SIZE * ROLLBACK_MAX_FRAME_COUNT
-.set ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS, ODB_ROLLBACK_LOCAL_INPUTS + PAD_REPORT_SIZE * ROLLBACK_MAX_FRAME_COUNT # u8
-.set ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS + 1*3 # u8
-.set ODB_ROLLBACK_PREDICTED_INPUTS, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS + 1*3 # PAD_REPORT_SIZE * ROLLBACK_MAX_FRAME_COUNT
-.set ODB_SAVESTATE_IS_ACTIVE, ODB_ROLLBACK_PREDICTED_INPUTS + PAD_REPORT_SIZE * ROLLBACK_MAX_FRAME_COUNT * 3 # bool
-.set ODB_SAVESTATE_FRAME, ODB_SAVESTATE_IS_ACTIVE + 1 # s32
+.set ODB_ROLLBACK_LOCAL_INPUTS, ODB_ROLLBACK_LOCAL_INPUTS_IDX + 1 # PAD_REPORT_SIZE * LOCAL_INPUTS_COUNT
+.set ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS, ODB_ROLLBACK_LOCAL_INPUTS + PAD_REPORT_SIZE * LOCAL_INPUTS_COUNT # u8[3]
+.set ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS, ODB_ROLLBACK_PREDICTED_INPUTS_READ_IDXS + 1*3 # u8[3]
+# Note: I think ODB_ROLLBACK_PREDICTED_INPUTS could probably be ROLLBACK_MAX_FRAME_COUNT length but I'm not 100% sure
+.set ODB_ROLLBACK_PREDICTED_INPUTS, ODB_ROLLBACK_PREDICTED_INPUTS_WRITE_IDXS + 1*3 # PAD_REPORT_SIZE * PREDICTED_INPUTS_COUNT * 3
+.set ODB_SAVESTATE_IS_PREDICTING, ODB_ROLLBACK_PREDICTED_INPUTS + PAD_REPORT_SIZE * PREDICTED_INPUTS_COUNT * 3 # bool
+.set ODB_SAVESTATE_FRAME, ODB_SAVESTATE_IS_PREDICTING + 1 # s32
 .set ODB_PLAYER_SAVESTATE_FRAME, ODB_SAVESTATE_FRAME + 4 # u32
-.set ODB_PLAYER_SAVESTATE_IS_ACTIVE, ODB_PLAYER_SAVESTATE_FRAME + 4*3 # u32[3]
-.set ODB_SAVESTATE_SSRB_ADDR, ODB_PLAYER_SAVESTATE_IS_ACTIVE + 3 # u32
+.set ODB_PLAYER_SAVESTATE_IS_PREDICTING, ODB_PLAYER_SAVESTATE_FRAME + 4*3 # u32[3]
+.set ODB_SAVESTATE_SSRB_ADDR, ODB_PLAYER_SAVESTATE_IS_PREDICTING + 3 # u32
 .set ODB_SAVESTATE_SSCB_ADDR, ODB_SAVESTATE_SSRB_ADDR + 4 # u32
 .set ODB_SFXDB_START, ODB_SAVESTATE_SSCB_ADDR + 4 # SFXDB_SIZE
 .set ODB_LATEST_FRAME, ODB_SFXDB_START + SFXDB_SIZE # u32
@@ -224,22 +231,27 @@ lwz \reg, -0x62A0(\reg)
 .set ODB_STABLE_ROLLBACK_END_FRAME, ODB_STABLE_ROLLBACK_IS_ACTIVE + 1 # s32
 .set ODB_STABLE_ROLLBACK_SHOULD_LOAD_STATE, ODB_STABLE_ROLLBACK_END_FRAME + 4 # bool
 .set ODB_STABLE_SAVESTATE_FRAME, ODB_STABLE_ROLLBACK_SHOULD_LOAD_STATE + 1 # s32
-.set ODB_STABLE_OPNT_FRAME_NUMS, ODB_STABLE_SAVESTATE_FRAME + 4 # s32[3]
-.set ODB_SHOULD_FORCE_PAD_RENEW, ODB_STABLE_OPNT_FRAME_NUMS + 4 # bool
+.set ODB_STABLE_FINALIZED_FRAME, ODB_STABLE_SAVESTATE_FRAME + 4 # s32
+.set ODB_SHOULD_FORCE_PAD_RENEW, ODB_STABLE_FINALIZED_FRAME + 4 # bool
 .set ODB_HUD_CANVAS, ODB_SHOULD_FORCE_PAD_RENEW + 1 # u32
-.set ODB_SIZE, ODB_HUD_CANVAS + 4
+.set ODB_PAUSE_COUNTER, ODB_HUD_CANVAS + 4 # u32
+.set ODB_FINALIZED_FRAME, ODB_PAUSE_COUNTER + 4 # u32
+.set ODB_REST_STICK_CHANGE_COUNTER, ODB_FINALIZED_FRAME + 4 # u32
+.set ODB_SIZE, ODB_REST_STICK_CHANGE_COUNTER + 4
 
 .set TXB_CMD, 0 # u8
 .set TXB_FRAME, TXB_CMD + 1 # s32
-.set TXB_DELAY, TXB_FRAME + 4 # u8 TODO: Delay should be part of some init message or something at start of game
+.set TXB_FINALIZED_FRAME, TXB_FRAME + 4 # s32
+.set TXB_DELAY, TXB_FINALIZED_FRAME + 4  # u8 TODO: Delay should be part of some init message or something at start of game
 .set TXB_PAD, TXB_DELAY + 1 # PAD_REPORT_SIZE
 .set TXB_SIZE, TXB_PAD + PAD_REPORT_SIZE
 
 .set RXB_RESULT, 0 # u8
 .set RXB_OPNT_COUNT, RXB_RESULT + 1 # u8
 .set RXB_OPNT_FRAME_NUMS, RXB_OPNT_COUNT + 1 # s32[3]
-.set RXB_OPNT_INPUTS, RXB_OPNT_FRAME_NUMS + 4*3 # PAD_REPORT_SIZE * ROLLBACK_MAX_FRAME_COUNT
-.set RXB_SIZE, RXB_OPNT_INPUTS + PAD_REPORT_SIZE * ROLLBACK_MAX_FRAME_COUNT * 3
+.set RXB_SMALLEST_LATEST_FRAME, RXB_OPNT_FRAME_NUMS + 4*3 # s32
+.set RXB_OPNT_INPUTS, RXB_SMALLEST_LATEST_FRAME + 4  # PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3
+.set RXB_SIZE, RXB_OPNT_INPUTS + PAD_REPORT_SIZE * RXB_INPUTS_COUNT * 3
 
 ################################################################################
 # Matchmaking States
@@ -276,7 +288,11 @@ lwz \reg, -0x62A0(\reg)
 .set MSRB_P2_CONNECT_CODE, MSRB_P1_CONNECT_CODE + 10 # string (10) hashtag is shift-jis
 .set MSRB_P3_CONNECT_CODE, MSRB_P2_CONNECT_CODE + 10 # string (10) hashtag is shift-jis
 .set MSRB_P4_CONNECT_CODE, MSRB_P3_CONNECT_CODE + 10 # string (10) hashtag is shift-jis
-.set MSRB_ERROR_MSG, MSRB_P4_CONNECT_CODE + 10 # string (241)
+.set MSRB_P1_SLIPPI_UID, MSRB_P4_CONNECT_CODE + 10 # string (29)
+.set MSRB_P2_SLIPPI_UID, MSRB_P1_SLIPPI_UID + 29 # string (29)
+.set MSRB_P3_SLIPPI_UID, MSRB_P2_SLIPPI_UID + 29 # string (29)
+.set MSRB_P4_SLIPPI_UID, MSRB_P3_SLIPPI_UID + 29 # string (29)
+.set MSRB_ERROR_MSG, MSRB_P4_SLIPPI_UID + 29 # string (241)
 .set ERROR_MESSAGE_LEN, 241
 .set MSRB_GAME_INFO_BLOCK, MSRB_ERROR_MSG + ERROR_MESSAGE_LEN # MATCH_STRUCT_LEN
 .set MSRB_SIZE, MSRB_GAME_INFO_BLOCK + MATCH_STRUCT_LEN
@@ -314,7 +330,8 @@ lwz \reg, -0x62A0(\reg)
 # CSS Data Table
 ################################################################################
 .set CSSDT_MSRB_ADDR, 0 # u32
-.set CSSDT_TEXT_STRUCT_ADDR, CSSDT_MSRB_ADDR + 4 # u32
+.set CSSDT_SLPCSS_ADDR, CSSDT_MSRB_ADDR + 4 # ptr
+.set CSSDT_TEXT_STRUCT_ADDR, CSSDT_SLPCSS_ADDR + 4 # u32
 .set CSSDT_SPINNER1, CSSDT_TEXT_STRUCT_ADDR + 4 # u8 (0 = hide, 1 = spin, 2 = done)
 .set CSSDT_SPINNER2, CSSDT_SPINNER1 + 1 # u8 (0 = hide, 1 = spin, 2 = done)
 .set CSSDT_SPINNER3, CSSDT_SPINNER2 + 1 # u8 (0 = hide, 1 = spin, 2 = done)
@@ -353,10 +370,25 @@ lwz \reg, -0x62A0(\reg)
 # CSS Chat Window Data Table
 ################################################################################
 .set CSSCWDT_INPUT, 0 # u8
-.set CSSCWDT_TIMER, CSSCWDT_INPUT + 1 # u8
+.set CSSCWDT_INPUT_SENT, CSSCWDT_INPUT + 1 # bool
+.set CSSCWDT_TIMER, CSSCWDT_INPUT_SENT + 1 # u8
 .set CSSCWDT_TEXT_STRUCT_ADDR, CSSCWDT_TIMER + 1 # u32
 .set CSSCWDT_CSSDT_ADDR, CSSCWDT_TEXT_STRUCT_ADDR + 4 # u32 CSS Data Table Address
 .set CSSCWDT_SIZE, CSSCWDT_CSSDT_ADDR + 4
+
+################################################################################
+# Name Entry Direct Code Buffer
+###############################################################################
+.set NEDC_CMD, 0 # u8
+.set NEDC_NAME_ENTRY_INDEX, NEDC_CMD + 1 # u8
+.set NEDC_SIZE, NEDC_NAME_ENTRY_INDEX + 1
+
+################################################################################
+# Name Entry Auto Complete 
+###############################################################################
+.set NEAC_CMD, 0 # u8
+.set NEAC_CURRENT_TEXT, NEAC_CMD + 1
+.set NEAC_SIZE, NEAC_CURRENT_TEXT + 24
 
 ################################################################################
 # Online status buffer offsets
@@ -381,8 +413,17 @@ lwz \reg, -0x62A0(\reg)
 .set RGB_SIZE, RGB_P2_RGPB + RGPB_SIZE
 
 ################################################################################
-# Const Values
+# slpCSS Symbol Structure
+################################################################################
+.set SLPCSS_CHATSELECT, 0x0
+.set SLPCSS_CHATMSG, 0x4
+.set SLPCSS_MODE, 0x8
+.set SLPCSS_CONNECTHELP, 0xC
+
+################################################################################
+# Const values
 ################################################################################
 .set RESP_NORMAL, 1
 .set RESP_SKIP, 2
 .set RESP_DISCONNECTED, 3
+.set RESP_ADVANCE, 4

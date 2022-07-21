@@ -14,7 +14,6 @@
         "[Gecko_Enabled]",
         "$Required: General Codes",
         "$Required: Slippi Playback",
-        "$Recommended: Normal Lag Reduction",
         "$Optional: Show Player Names",
         "",
         "[Gecko]"
@@ -34,7 +33,6 @@
         "[Gecko_Enabled]",
         "$Required: General Codes",
         "$Required: Slippi Playback",
-        "$Recommended: Normal Lag Reduction",
         "$Optional: Show Player Names",
         "",
         "[Gecko]"
@@ -90,7 +88,8 @@
         "Fizzi",
         "UnclePunch",
         "Achilles",
-        "tauKhan"
+        "tauKhan",
+        "Krohnos"
       ],
       "description": [
         "Used to play back a .slp file",
@@ -124,18 +123,12 @@
           "sourceFolder": "Common/FastForward",
           "isRecursive": true,
           "annotation": "Functions for supporting FFW [Fizzi, Unclepunch]"
-        }
-      ]
-    },
-    {
-      "name": "Recommended: Normal Lag Reduction",
-      "authors": [
-        "Hannes Mann"
-      ],
-      "build": [
+        },
         {
-          "type": "binary",
-          "sourceFile": "Binary/NormalLagReduction.bin"
+          "type": "injectFolder",
+          "sourceFolder": "Common/CompatibilityHooks",
+          "isRecursive": true,
+          "annotation": "Functions that can be externally modified"
         }
       ]
     },
@@ -183,8 +176,7 @@
         "UnclePunch"
       ],
       "description": [
-        "Set Aspect Ratio to \"Force 16:9\" in Graphics for 16:9 monitors -----------------",
-        "Requires all players to have enabled for netplay."
+        "Set Aspect Ratio to \"Force 16:9\" in Graphics"
       ],
       "build": [
         {
