@@ -12,13 +12,14 @@
 .set CMD_FRAME_BOOKEND, 0x3C
 .set CMD_GAME_END, 0x39
 .set COMMAND_COUNT, 10 # number of possible commands
+.set CMD_MENU_FRAME, 0x3E # Not executed while in a recorded game
 
 # Payload lengths, if any additional data is added, these must be incremented
 .set MESSAGE_DESCRIPTIONS_PAYLOAD_LENGTH, 3 * (COMMAND_COUNT - 1) + 1 # byte count
 .set GAME_INFO_PAYLOAD_LENGTH, 701 # byte count
 .set GAME_FRAME_START_PAYLOAD_LENGTH, 12 #byte count
 .set GAME_PRE_FRAME_PAYLOAD_LENGTH, 63 # byte count
-.set GAME_POST_FRAME_PAYLOAD_LENGTH, 80 # byte count
+.set GAME_POST_FRAME_PAYLOAD_LENGTH, 112 # byte count
 .set GAME_ITEM_INFO_PAYLOAD_LENGTH, 42 # byte count
 .set GAME_FRAME_BOOKEND_PAYLOAD_LENGTH, 8 # byte count
 .set GAME_END_PAYLOAD_LENGTH, 2 # byte count
@@ -66,3 +67,11 @@
 ################################################################################
 .set PlayerBlockSize,0x2600
 .set LCancelStatus,0x25FF
+
+################################################################################
+# CSS Screen Player Cursor State Offsets
+################################################################################
+.set CSS_CURSOR_STRUCT_PTR_P1, 0x804A0BC0
+.set CSS_CURSOR_STRUCT_PTR_P2, 0x804A0BC4
+.set CSS_CURSOR_STRUCT_PTR_P3, 0x804A0BC8
+.set CSS_CURSOR_STRUCT_PTR_P4, 0x804A0BCC
