@@ -28,6 +28,7 @@ cmpwi r8, 0x0208
 beq Injection_Exit
 
 addi r3, sp, STACK_OFST_EXI_BUF # This is the start address for the free space
+byteAlign32 r3, r3 
 
 li r4, CMD_MENU_FRAME # Command byte
 stb r4, 0x0(r3)
