@@ -22,7 +22,7 @@
 backup STACK_FREE_SPACE
 
 # Allocate ourselves a buffer
-li  r3, EXI_BUF_LEN
+li  r3, EXI_BUF_LEN+64
 branchl r12,HSD_MemAlloc
 
 # check if NOT VS Mode
