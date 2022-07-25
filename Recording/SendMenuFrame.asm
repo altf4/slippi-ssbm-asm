@@ -23,6 +23,7 @@ backup STACK_FREE_SPACE
 
 # Allocate ourselves a buffer
 li  r31, EXI_BUF_LEN+64
+mr r3, r31
 branchl r12,HSD_MemAlloc
 
 # check if NOT VS Mode
@@ -328,6 +329,7 @@ branchl r12, FN_EXITransferBuffer
 
 Injection_Exit:
 
+mr r3, r31
 branchl r12, HSD_Free
 
 restore STACK_FREE_SPACE
