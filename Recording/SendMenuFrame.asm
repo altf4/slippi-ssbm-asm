@@ -12,7 +12,7 @@
 .include "Recording/Recording.s"
 
 .set PAYLOAD_LEN, 0x49
-.set EXI_BUF_LEN, PAYLOAD_LEN + 1
+.set EXI_BUF_LEN, PAYLOAD_LEN + 1 + 64
 
 # .set STACK_FREE_SPACE, EXI_BUF_LEN + 0x20 # Add 0x20 to deal with byte alignment
 .set STACK_FREE_SPACE, EXI_BUF_LEN + 64 # Add 64 to deal with byte alignment
@@ -22,9 +22,9 @@
 backup STACK_FREE_SPACE
 
 # Allocate ourselves a buffer
-li  r31, EXI_BUF_LEN+64
-mr r3, r31
+li  r3, EXI_BUF_LEN
 branchl r12,HSD_MemAlloc
+mr r31, r3
 
 # check if NOT VS Mode
 getMinorMajor r8
