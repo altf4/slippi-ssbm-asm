@@ -322,9 +322,11 @@ stb r4, 0x48(r3)
 
 #------------- Transfer Buffer ------------
 # r3 is the buffer arg, but it's already set
+mr r6, r3 # backup r3
 li r4, EXI_BUF_LEN
 li r5, CONST_ExiWrite
 branchl r12, FN_EXITransferBuffer
+mr r3, r6 # restore r3
 
 Injection_Exit:
 
