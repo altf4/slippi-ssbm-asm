@@ -14,7 +14,7 @@
 .set PAYLOAD_LEN, 0x49
 .set EXI_BUF_LEN, PAYLOAD_LEN + 1
 
-; .set STACK_FREE_SPACE, EXI_BUF_LEN + 0x20 # Add 0x20 to deal with byte alignment
+# .set STACK_FREE_SPACE, EXI_BUF_LEN + 0x20 # Add 0x20 to deal with byte alignment
 .set STACK_FREE_SPACE, EXI_BUF_LEN + 64 # Add 64 to deal with byte alignment
 
 .set STACK_OFST_EXI_BUF, BKP_FREE_SPACE_OFFSET
@@ -32,8 +32,8 @@ beq Injection_Exit
 cmpwi r8, 0x0208
 beq Injection_Exit
 
-; addi r3, sp, STACK_OFST_EXI_BUF # This is the start address for the free space
-; byteAlign32 r3, r3
+# addi r3, sp, STACK_OFST_EXI_BUF # This is the start address for the free space
+# byteAlign32 r3, r3
 
 li r4, CMD_MENU_FRAME # Command byte
 stb r4, 0x0(r3)
