@@ -68,7 +68,7 @@ InitializeEXI:
 # Prepare to call EXISelect (80346688) r3: 0, r4: 0, r5: 4
   li r3, STG_EXIIndex # slot
   li r4, 0 # device
-  li r5, 5 # freq
+  li r5, 3 # freq
   branchl r12, EXISelect
 
 # Step 2 - Write
