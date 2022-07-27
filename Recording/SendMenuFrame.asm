@@ -12,14 +12,13 @@
 .include "Recording/Recording.s"
 
 .set PAYLOAD_LEN, 0x49
-.set EXI_BUF_LEN, PAYLOAD_LEN + 1 + 64
+.set EXI_BUF_LEN, PAYLOAD_LEN + 1 + 64 # Add 64 to deal with byte alignment
 
 # .set STACK_FREE_SPACE, EXI_BUF_LEN + 0x20 # Add 0x20 to deal with byte alignment
-.set STACK_FREE_SPACE, EXI_BUF_LEN + 64 # Add 64 to deal with byte alignment
+# .set STACK_FREE_SPACE, EXI_BUF_LEN # Add 64 to deal with byte alignment
+# .set STACK_OFST_EXI_BUF, BKP_FREE_SPACE_OFFSET
 
-.set STACK_OFST_EXI_BUF, BKP_FREE_SPACE_OFFSET
-
-backup STACK_FREE_SPACE
+backup
 
 # Allocate ourselves a buffer
 li  r3, EXI_BUF_LEN
@@ -332,5 +331,5 @@ Injection_Exit:
 mr r3, r31
 branchl r12, HSD_Free
 
-restore STACK_FREE_SPACE
+restore
 lwz r3, 0(r25) # replaced code line
