@@ -189,6 +189,36 @@ backup
   lwz r3,0x790(REG_PlayerData)
   stw r3,0x6D(REG_Buffer)
 
+  # FoD Platforms
+  # Load the current stage id from the static match block
+  load r12, 0x8046db77
+  lbz r12, 0 (r12)
+
+  # Compare with the id for the Fountain of Dreams
+  cmpwi r12, 0x02
+  beq Read_Platforms
+
+  # We're not on FoD, so zero out the platform locations
+  #  then branch away
+  load r4 0x00000000
+  stw r4, 0x71(r31)
+  stw r4, 0x75(r31)
+  b Read_Platforms_Done
+
+Read_Platforms:
+  # FoD left platform
+  load r4 0x804d64b8
+  lbz r4, 0(r4)
+  addi r4, r4, 0x0c
+  stw r4, 0x71(r31)
+
+  # FoD right platform
+  load r4 0x804d64b8
+  lbz r4, 0(r4)
+  addi r4, r4, 0x3c
+  stw r4, 0x75(r31)
+Read_Platforms_Done:
+
 #------------- Increment Buffer Offset ------------
   lwz REG_BufferOffset,bufferOffset(r13)
   addi REG_BufferOffset,REG_BufferOffset,(GAME_POST_FRAME_PAYLOAD_LENGTH+1)
