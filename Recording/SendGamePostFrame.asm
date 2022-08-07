@@ -208,13 +208,13 @@ backup
 Read_Platforms:
   # FoD left platform
   load r4 0x804d64b8
-  lbz r4, 0(r4)
+  lwz r4, 0(r4)
   addi r4, r4, 0x0c
   stw r4, 0x71(r31)
 
   # FoD right platform
   load r4 0x804d64b8
-  lbz r4, 0(r4)
+  lwz r4, 0(r4)
   addi r4, r4, 0x3c
   stw r4, 0x75(r31)
 Read_Platforms_Done:
