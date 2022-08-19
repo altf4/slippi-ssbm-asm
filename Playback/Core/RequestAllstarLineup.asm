@@ -45,8 +45,8 @@ ReceiveOrder:
   branchl r12,FN_EXITransferBuffer
   cmpwi r3, 1
   beq RestoreRNG
-  cmpwi r3, 4                               # keep checking
-  bge ReceiveOrder
+  cmpwi r3, -4                               # keep checking
+  ble ReceiveOrder
   b Exit
 
 RestoreRNG:
