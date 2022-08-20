@@ -19,6 +19,7 @@
 .set REG_BufferPointer, 30
 .set REG_BufferLength, 29
 .set REG_InterruptIdx, 28
+.set REG_AlignedLength, 27
 
 ExiTransferBuffer:
 # Store stack frame
@@ -31,6 +32,9 @@ ExiTransferBuffer:
 # Backup EXI transfer behavior
   mr REG_TransferBehavior,r5
 
+# Calculate aligned boundary for transfer buffer. Required for hardware EXI DMA transfer
+  byteAlign32 REG_AlignedLength, REG_BufferLength
+
 # Disable interrupts. I think perhaps we can have EXI transfer issues when
 # this process is interrupted?
   branchl r12, OSDisableInterrupts
@@ -38,6 +42,15 @@ ExiTransferBuffer:
 
   cmpwi REG_TransferBehavior,CONST_ExiRead
   beq FLUSH_WRITE_LOOP_END # Only flush before write when writing
+
+# First we write 0x00 to the bytes following all the messages up to the 32 byte boundary. This will
+# be used as a "nop" command, for which the receiver can skip to next byte. This needs to be done
+# because on hardware, DMA sends must be sent as 32 byte chunks. Currently I think allocated buffers
+# should always reserve a size up to the 32 byte boundary so this should be safe as long as the
+# addressed passed in is of a buffer allocated with HSD_MemAlloc
+  add r3, REG_BufferPointer, REG_BufferLength
+  sub r4, REG_AlignedLength, REG_BufferLength
+  branchl r12, Zero_AreaLength
 
   # Start flush loop to write the data in buf through to RAM.
   # Cache blocks are 32 bytes in length and the buffer obtained from malloc
@@ -64,14 +77,15 @@ InitializeEXI:
 # Prepare to call EXISelect (80346688) r3: 0, r4: 0, r5: 4
   li r3, STG_EXIIndex # slot
   li r4, 0 # device
-  li r5, 5 # freq
+  li r5, 3 # freq
   branchl r12, EXISelect
 
 # Step 2 - Write
+
 # Prepare to call EXIDma (80345e60)
   li r3, STG_EXIIndex # slot
   mr r4, REG_BufferPointer    #buffer location
-  mr r5, REG_BufferLength     #length
+  mr r5, REG_AlignedLength     #length
   mr r6, REG_TransferBehavior # write mode input. 1 is write
   li r7, 0                # r7 is a callback address. Dunno what to use so just set to 0
   branchl r12, EXIDma

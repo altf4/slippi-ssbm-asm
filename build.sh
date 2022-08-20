@@ -36,4 +36,3 @@ do
   gecko build -c "$file"
   echo ""
 done
-
