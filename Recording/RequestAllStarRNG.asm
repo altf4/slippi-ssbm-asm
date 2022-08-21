@@ -38,7 +38,7 @@ ReceiveOrder:
 # update seed
   lwz	r3, -0x570C (r13) # RNG address stored in memory
   #lwz r0, GET_ALLSTAR_RNG_OFFSET (REG_Buffer)
-  li  r0,0xc88f4f11
+  load  r0,0xc88f4f11
   stw r0,0x0(r3)
 
 # free buffer

@@ -57,29 +57,29 @@ RestoreRNG:
 
 
 load r3,0xc009c205
-stw r3,0x0(REG_Buffer)
-load r3,0xb604b511
 stw r3,0x4(REG_Buffer)
-load r3,0xbe0cbe0a
+load r3,0xb604b511
 stw r3,0x8(REG_Buffer)
-load r3,0xc919c907
+load r3,0xbe0cbe0a
 stw r3,0xc(REG_Buffer)
-load r3,0xc316c30f
+load r3,0xc919c907
 stw r3,0x10(REG_Buffer)
-load r3,0xbb0bbb12
+load r3,0xc316c30f
 stw r3,0x14(REG_Buffer)
-load r3,0xc415c417
+load r3,0xbb0bbb12
 stw r3,0x18(REG_Buffer)
-load r3,0xc414c618
+load r3,0xc415c417
 stw r3,0x1c(REG_Buffer)
-load r3,0xc600c606
+load r3,0xc414c618
 stw r3,0x20(REG_Buffer)
-load r3,0xb108b102
+load r3,0xc600c606
 stw r3,0x24(REG_Buffer)
-load r3,0xb10dbd0e
+load r3,0xb108b102
 stw r3,0x28(REG_Buffer)
-load r3,0xbd10bd01
+load r3,0xb10dbd0e
 stw r3,0x2c(REG_Buffer)
+load r3,0xbd10bd01
+stw r3,0x30(REG_Buffer)
 
 SetOrder:
 .set REG_Loop, 12
