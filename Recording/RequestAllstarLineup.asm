@@ -16,70 +16,39 @@ backup
   branchl r0, HSD_MemAlloc
   mr REG_Buffer, r3
 
-RequestOrder:
-# get this players data
-  #lbz r12,-0x49B0(r13)
-  #mulli r12,r12,0x24
-  #add r12,r12,REG_MajorData
-# cmd
-  #li r3,CMD_REQ_ALLSTAR_ORDER
-  #stb r3,REQ_ALLSTAR_CMD_OFFSET(REG_Buffer)
-# ckind
-  #lbz r3, 0x70 (r12)
-  #stb r3,REQ_ALLSTAR_CKIND_OFFSET(REG_Buffer)
-# costume
-  #lbz r3, 0x73 (r12)
-  #stb r3,REQ_ALLSTAR_COSTUME_OFFSET(REG_Buffer)
-# difficulty
-  #lbz r3, 0x7F (r12)
-  #stb r3,REQ_ALLSTAR_DIFFICULTY_OFFSET(REG_Buffer)
-# req
-  #mr r3,REG_Buffer
-  #li  r4,REQ_ALLSTAR_BUFSIZE                #Length
-  #li  r5,CONST_ExiWrite
-  #branchl r12,FN_EXITransferBuffer
-ReceiveOrder:
-  #mr r3,REG_Buffer
-  #li  r4,GET_ALLSTAR_BUFSIZE                #Length
-  #li  r5,CONST_ExiRead
-  #branchl r12,FN_EXITransferBuffer
-  #cmpwi r3, 1
-  #beq RestoreRNG
-  #cmpwi r3, -4                               # keep checking
-  #ble ReceiveOrder
-  #b Exit
+# statically simulate the results of the EXI transaction(s)
+  load r3,0xc88f4f11
+  stw r3,0x0(REG_Buffer)
+  load r3,0xc009c205
+  stw r3,0x4(REG_Buffer)
+  load r3,0xb604b511
+  stw r3,0x8(REG_Buffer)
+  load r3,0xbe0cbe0a
+  stw r3,0xc(REG_Buffer)
+  load r3,0xc919c907
+  stw r3,0x10(REG_Buffer)
+  load r3,0xc316c30f
+  stw r3,0x14(REG_Buffer)
+  load r3,0xbb0bbb12
+  stw r3,0x18(REG_Buffer)
+  load r3,0xc415c417
+  stw r3,0x1c(REG_Buffer)
+  load r3,0xc414c618
+  stw r3,0x20(REG_Buffer)
+  load r3,0xc600c606
+  stw r3,0x24(REG_Buffer)
+  load r3,0xb108b102
+  stw r3,0x28(REG_Buffer)
+  load r3,0xb10dbd0e
+  stw r3,0x2c(REG_Buffer)
+  load r3,0xbd10bd01
+  stw r3,0x30(REG_Buffer)
 
 RestoreRNG:
-# update seed
-  #lwz	r3, -0x570C (r13)
-  #lwz r0, GET_ALLSTAR_RNG_OFFSET (REG_Buffer)
-  #stw r0,0x0(r3)
-
-
-load r3,0xc009c205
-stw r3,0x4(REG_Buffer)
-load r3,0xb604b511
-stw r3,0x8(REG_Buffer)
-load r3,0xbe0cbe0a
-stw r3,0xc(REG_Buffer)
-load r3,0xc919c907
-stw r3,0x10(REG_Buffer)
-load r3,0xc316c30f
-stw r3,0x14(REG_Buffer)
-load r3,0xbb0bbb12
-stw r3,0x18(REG_Buffer)
-load r3,0xc415c417
-stw r3,0x1c(REG_Buffer)
-load r3,0xc414c618
-stw r3,0x20(REG_Buffer)
-load r3,0xc600c606
-stw r3,0x24(REG_Buffer)
-load r3,0xb108b102
-stw r3,0x28(REG_Buffer)
-load r3,0xb10dbd0e
-stw r3,0x2c(REG_Buffer)
-load r3,0xbd10bd01
-stw r3,0x30(REG_Buffer)
+# update RNG seed
+  lwz	r3, -0x570C (r13)
+  lwz r0, GET_ALLSTAR_RNG_OFFSET (REG_Buffer)
+  stw r0,0x0(r3)
 
 SetOrder:
 .set REG_Loop, 12
