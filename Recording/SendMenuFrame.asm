@@ -31,6 +31,8 @@ cmpwi r8, 0x0202
 beq Injection_Exit
 cmpwi r8, 0x0208
 beq Injection_Exit
+cmpwi r8, 0x0005 # Allstar 
+beq Injection_Exit
 
 # addi r31, sp, STACK_OFST_EXI_BUF # This is the start address for the free space
 # byteAlign32 r31, r31

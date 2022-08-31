@@ -17,9 +17,9 @@
   cmpwi r3, SCENE_HOMERUN_IN_GAME
   beq ReturnTrue
 
-ReturnFalse:
-  li  r3,0
-  b Exit
+#ReturnFalse:
+#  li  r3,0
+#  b Exit
 
 ReturnTrue:
   li  r3,1
