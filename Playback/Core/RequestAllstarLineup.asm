@@ -12,7 +12,7 @@
 backup
 
 # alloc temp buffer
-  li r3, GET_ALLSTAR_BUFSIZE    # this is larger, using this to alloc the buffer
+  li r3, REQ_ALLSTAR_BUFSIZE    # this is larger, using this to alloc the buffer
   branchl r0, HSD_MemAlloc
   mr REG_Buffer, r3
 
@@ -49,11 +49,13 @@ ReceiveOrder:
   ble ReceiveOrder
   b Exit
 
+/*
 RestoreRNG:
 # update seed
   lwz	r3, -0x570C (r13)
   lwz r0, GET_ALLSTAR_RNG_OFFSET (REG_Buffer)
   stw r0,0x0(r3)
+*/
 
 SetOrder:
 .set REG_Loop, 12
@@ -64,10 +66,10 @@ SetOrder:
   addi REG_BufferOrder, REG_Buffer, GET_ALLSTAR_STAGE_OFFSET
 SetOrder_Loop:
 # stage
-  lbz r3,0x0(REG_BufferOrder)
+  lbz r3,GET_ALLSTAR_STAGE_OFFSET(REG_BufferOrder)
   stb r3,0x2(REG_GameOrder)
 # ckind
-  lbz r3,0x1(REG_BufferOrder)
+  lbz r3,GET_ALLSTAR_CKIND_OFFSET(REG_BufferOrder)
   stb r3,0x3(REG_GameOrder)
 SetOrder_LoopInc:
   addi REG_Loop,REG_Loop,1
