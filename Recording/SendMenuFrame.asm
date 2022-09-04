@@ -31,12 +31,18 @@ cmpwi r8, 0x0202
 beq Injection_Exit
 cmpwi r8, 0x0208
 beq Injection_Exit
-cmpwi r8, 0x0005 # Allstar 
+
+# Allstar CSS
+cmpwi r8, 0x7005
+beq Send_MenuFrame
+# All other 0xNN05 is rejected
+andi. r4,r8,0x00FF
+cmplwi r4, 0x0005
 beq Injection_Exit
 
 # addi r31, sp, STACK_OFST_EXI_BUF # This is the start address for the free space
 # byteAlign32 r31, r31
-
+Send_MenuFrame:
 li r4, CMD_MENU_FRAME # Command byte
 stb r4, 0x0(r31)
 
