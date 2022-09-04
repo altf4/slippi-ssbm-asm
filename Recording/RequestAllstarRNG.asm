@@ -18,6 +18,7 @@ backup
 # get the appropriate RNG seed into r0
   bl data          # branch to label
   mflr r4          # get ptr to address after the blrl instruction
+  mulli r3,r3,0x4  # multiple index by 4, since each RNG seed is 4 bytes long
   lwzx r0,r3,r4    # access the r3'rd of the array
 
   b past_data           # don't execute the data as an instruction!
@@ -36,3 +37,4 @@ past_data:
 Exit:
   restore
   lmw	r26, 0x0058 (sp)
+  
