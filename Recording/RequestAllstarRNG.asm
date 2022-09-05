@@ -26,7 +26,7 @@ backup
 # THANK YOU UnclePunch!
 data:
   blrl                                    # instantly return
-  .long 0xC88F4F11, 0xBB048EE8, 0x5939db62, 0x05c986e0, 0x5aa0be8c, 0x8b86cd40, 0xc8b6cbc9, 0x7584f37b, 0x9844996a, 0xc5d6059e, 0x9d077f22, 0xe6615017, 0x1084a48e
+  .long 0xC88F4F11, 0xB1C6920B, 0xBCFC16D1, 0x98E3A1B5, 0x7e225291, 0xe105b595, 0xc8b6cbc9, 0x7584f37b, 0x9844996a, 0xc5d6059e, 0x9d077f22, 0xe6615017, 0x1084a48e
   .align 2                                # align so assembler doesnt complain
 
 past_data:
@@ -37,4 +37,3 @@ past_data:
 Exit:
   restore
   lmw	r26, 0x0058 (sp)
-  
