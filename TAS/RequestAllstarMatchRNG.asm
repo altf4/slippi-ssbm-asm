@@ -4,7 +4,7 @@
 
 .include "Common/Common.s"
 .include "Playback/Playback.s"
-.include "TASBot.s"
+.include "TAS/TASBot.s"
 
 .set REG_MajorData, 30
 .set REG_Buffer, 29
@@ -20,7 +20,7 @@ RequestRNG:
 # cmd
   li r3,CMD_REQ_ALLSTAR_RNG
   stb r3,REQ_ALLSTAR_RNG_CMD_OFFSET(REG_Buffer)
-# difficulty
+# match index
   lbz r3, 0x0 (REG_MajorData)
   rlwinm    r3, r3, 29, 27, 31
   stb r3,REQ_ALLSTAR_RNG_INDEX_OFFSET(REG_Buffer)

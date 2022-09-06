@@ -5,7 +5,7 @@
 
 .include "Common/Common.s"
 .include "Playback/Playback.s"
-.include "TASBot.s"
+.include "TAS/TASBot.s"
 
 .set REG_MajorData, 28
 .set REG_Buffer, 29
