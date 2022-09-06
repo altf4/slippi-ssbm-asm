@@ -80,11 +80,6 @@
         },
         {
           "type": "binary",
-          "sourceFile": "Binary/FasterMeleeSettings/CStickSinglePlayer.bin",
-          "annotation": "C-Stick in Single Player [Zauron]"
-        },
-        {
-          "type": "binary",
           "sourceFile": "Binary/FasterMeleeSettings/CssFromDebugMenu.bin",
           "annotation": "Exiting Debug Menu Returns to CSS [Achilles]"
         },
