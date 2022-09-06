@@ -1,0 +1,36 @@
+{
+  "outputFiles": [
+    {
+      "file": "Output/TAS/GALE01r2.ini",
+      "header": [
+        "# GALE01 - Super Smash Bros. Melee NTSC-U 1.02",
+        "",
+        "[Core]",
+        "CPUThread = False",
+        "GPUDeterminismMode = fake-completion",
+        "PollingMethod = OnSIRead",
+        "FastDiscSpeed = True",
+        "",
+        "[Gecko_Enabled]",
+        "$Required: TAS Codes",
+        "",
+        "[Gecko]"
+      ]
+    }
+  ],
+  "codes": [
+    {
+      "name": "TAS Codes",
+      "authors": [
+        "UnclePunch"
+      ],
+      "build": [
+        {
+          "type": "injectFolder",
+          "sourceFolder": "TAS",
+          "isRecursive": true
+        }
+      ]
+    }
+  ]
+}
