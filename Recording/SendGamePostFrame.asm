@@ -209,13 +209,13 @@ Read_Platforms:
   # FoD left platform
   load r4 0x804d64b8
   lwz r4, 0(r4)
-  addi r4, r4, 0x0c
+  lwz r4, 0x0c(r4)
   stw r4, 0x71(REG_Buffer)
 
   # FoD right platform
   load r4 0x804d64b8
   lwz r4, 0(r4)
-  addi r4, r4, 0x3c
+  lwz r4, 0x3c(r4)
   stw r4, 0x75(REG_Buffer)
 Read_Platforms_Done:
 
