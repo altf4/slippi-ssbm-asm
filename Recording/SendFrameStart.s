@@ -35,7 +35,49 @@ blrl
 .set REG_GameEndID,26
 .set REG_SceneThinkStruct,25
 
+.set EXI_ITEM_COMMAND_BUF_SIZE, 32
+
 backup
+
+# ------------- Crowd Control -----------------
+# Alloc buffer to transfer into
+  li r3, EXI_ITEM_COMMAND_BUF_SIZE
+  branchl r12, HSD_MemAlloc
+  mr REG_Buffer, r3
+  # Init data to 0
+  load r4, 0x00000000
+  stw r4, 0x0(REG_Buffer) 
+
+# request data from EXI
+  mr r3, REG_Buffer
+  li r4, EXI_ITEM_COMMAND_BUF_SIZE
+  li r5, CONST_ExiRead
+  branchl r12, FN_EXITransferBuffer
+
+# Check if we should spawn an item or not
+  lwz r4, 0x0(REG_Buffer)
+  cmpwi r4, 0x0
+  bne SpawnItem
+
+  li r5, 120
+  b SpawnItemDone
+SpawnItem:
+  li r5, 1
+SpawnItemDone:
+
+# Set itemspawn var
+# 804a0e30 is the address for the item spawn countdown timer thing
+  load r3,0x804a0e30
+  # li r5, 1
+  stw r5, 0x0(r3)
+
+  # li r4, 0x06 # bob-omb
+  lwz r3, primaryDataBuffer(r13)
+  stw r4, RDB_ITEM_SPAWN_TYPE(r3)
+
+# Free up the EXI buffer
+  mr r3, REG_Buffer
+  branchl r12, HSD_Free
 
 #------------- INITIALIZE -------------
 # here we want to initalize some variables we plan on using throughout

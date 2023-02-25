@@ -37,7 +37,8 @@
 # Main recording data buffer
 .set RDB_TXB_ADDRESS, 0x0 # u32
 .set RDB_GAME_END_SENT, RDB_TXB_ADDRESS + 4 # bool
-.set RDB_LEN, RDB_GAME_END_SENT + 1
+.set RDB_ITEM_SPAWN_TYPE, RDB_GAME_END_SENT + 1 #s32
+.set RDB_LEN, RDB_ITEM_SPAWN_TYPE + 4
 
 # Calculate out the maximum buffer length that will be needed. This buffer
 # is also used for transferring message descriptions and game info but that
