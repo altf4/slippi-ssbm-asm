@@ -59,7 +59,10 @@ backup
   cmpwi r4, 0x0
   bne SpawnItem
 
-  li r5, 120
+  li r5, 120 # arbitrary value > 1
+  # Apparently the game doesn't like being told to spawn item 0x00
+  #   even when the timer isn't ready yet. So always set this to something valid
+  li r4, 0x06 # bob-omb. 
   b SpawnItemDone
 SpawnItem:
   li r5, 1
