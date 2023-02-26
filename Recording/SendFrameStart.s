@@ -40,6 +40,10 @@ blrl
 backup
 
 # ------------- Crowd Control -----------------
+# The incoming message is expected to be 8 bytes:
+#   0x12345678 0x000000NN
+#     Where NN is the item type ID
+
 # Alloc buffer to transfer into
   li r3, EXI_ITEM_COMMAND_BUF_SIZE
   branchl r12, HSD_MemAlloc
@@ -56,9 +60,11 @@ backup
 
 # Check if we should spawn an item or not
   lwz r4, 0x0(REG_Buffer)
-  cmpwi r4, 0x0
-  bne SpawnItem
+  load r5, 0x41414141 # marker
+  cmpw r4, r5
+  beq SpawnItem
 
+DontSpawnItem:
   li r5, 120 # arbitrary value > 1
   # Apparently the game doesn't like being told to spawn item 0x00
   #   even when the timer isn't ready yet. So always set this to something valid
@@ -66,15 +72,15 @@ backup
   b SpawnItemDone
 SpawnItem:
   li r5, 1
+  # lwz r4, 0x4(REG_Buffer)
+  li r4, 0x06 # just do a bob-omb for now. TODO Change this back later
 SpawnItemDone:
 
 # Set itemspawn var
 # 804a0e30 is the address for the item spawn countdown timer thing
   load r3,0x804a0e30
-  # li r5, 1
   stw r5, 0x0(r3)
 
-  # li r4, 0x06 # bob-omb
   lwz r3, primaryDataBuffer(r13)
   stw r4, RDB_ITEM_SPAWN_TYPE(r3)
 
