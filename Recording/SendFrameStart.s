@@ -60,7 +60,7 @@ backup
 
 # Check if we should spawn an item or not
   lwz r4, 0x0(REG_Buffer)
-  load r5, 0x41414141 # marker
+  load r5, 0x12345678
   cmpw r4, r5
   beq SpawnItem
 
@@ -68,12 +68,14 @@ DontSpawnItem:
   li r5, 120 # arbitrary value > 1
   # Apparently the game doesn't like being told to spawn item 0x00
   #   even when the timer isn't ready yet. So always set this to something valid
-  li r4, 0x06 # bob-omb. 
+  # This is bob-omb. 
+  li r4, 0x06 
   b SpawnItemDone
 SpawnItem:
   li r5, 1
-  # lwz r4, 0x4(REG_Buffer)
-  li r4, 0x06 # just do a bob-omb for now. TODO Change this back later
+  load r4, 0x00000000
+  lbz r4, 0x8(REG_Buffer)
+  # li r4, 0x06 # just do a bob-omb for now. TODO Change this back later
 SpawnItemDone:
 
 # Set itemspawn var
