@@ -37,7 +37,7 @@ backup
 # THANK YOU UnclePunch!
 data:
   blrl                                    # instantly return
-  .long 0xC88F4F11, 0xB1C6920B, 0xBCFC16D1, 0x98E3A1B5, 0x7e225291, 0xe105b595, 0x74bd6922, 0xa6e1d15c, 0xfae86527, 0x98fc85e9, 0xa43b295d, 0xc5c0b749, 0x1084a48e
+  .long 0xC88F4F11, 0xB1C6920B, 0xBCFC16D1, 0x98E3A1B5, 0x7e225291, 0xe105b595, 0x74bd6922, 0xa6e1d15c, 0xfae86527, 0x98fc85e9, 0xa43b295d, 0xc5c0b749, 0xf7f86919
   #        marth     bowser       kirby        yoshi       peach      gannon       doc          ness      y link       pichu       mario         ics      gnw
   .align 2                                # align so assembler doesnt complain
 
