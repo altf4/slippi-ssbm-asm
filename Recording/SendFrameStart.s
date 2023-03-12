@@ -37,9 +37,26 @@ blrl
 
 backup
 
+# Icicle Mountain Item spawn timer override
+# Check if we're on icicle mountain (stageID == 0xBD)
+  load r4, 0x804D49EB
+  lbz r4, 0x0(r4)
+  cmpwi r4, 0xBD
+  bne Initialize
+# Check if we're on sceneFrameCount 905
+  lwz r4, frameIndex(r13)
+  cmpwi r4, 782 #905
+  bne Initialize
+# Force item to spawn this frame. Skip Crowd Control processing.
+  li r5, 1
+  load r3, 0x804a0e30
+  stw r5, 0x0(r3)
+  b Initialize
+
 #------------- INITIALIZE -------------
 # here we want to initalize some variables we plan on using throughout
 # get current offset in buffer
+Initialize:
   lwz r3, primaryDataBuffer(r13)
   lwz REG_Buffer, RDB_TXB_ADDRESS(r3)
   lwz REG_BufferOffset,bufferOffset(r13)
