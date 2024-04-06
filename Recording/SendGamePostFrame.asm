@@ -157,37 +157,43 @@ backup
   # Note: All ECB Coords are offsets from the character's center
   #   Not absolute positions
 
+  # send instance information
+  lhz r3,0x18ec(REG_PlayerData)
+  sth r3,0x51(REG_Buffer)
+  lhz r3,0x2088(REG_PlayerData)
+  sth r3,0x53(REG_Buffer)
+
   # ECB top edge, x coord
   lwz r3,0x774(REG_PlayerData)
-  stw r3,0x51(REG_Buffer)
+  stw r3,0x55(REG_Buffer)
 
   # ECB top edge, y coord
   lwz r3,0x0778(REG_PlayerData)
-  stw r3,0x55(REG_Buffer)
+  stw r3,0x59(REG_Buffer)
 
   # ECB bottom edge, x coord
   lwz r3,0x77C(REG_PlayerData)
-  stw r3,0x59(REG_Buffer)
+  stw r3,0x5D(REG_Buffer)
 
   # ECB bottom edge, y coord
   lwz r3,0x780(REG_PlayerData)
-  stw r3,0x5D(REG_Buffer)
+  stw r3,0x61(REG_Buffer)
 
   # ECB right edge, x coord
   lwz r3,0x784(REG_PlayerData)
-  stw r3,0x61(REG_Buffer)
+  stw r3,0x65(REG_Buffer)
 
   # ECB right edge, y coord
   lwz r3,0x788(REG_PlayerData)
-  stw r3,0x65(REG_Buffer)
+  stw r3,0x69(REG_Buffer)
 
   # ECB left edge, x coord
   lwz r3,0x78C(REG_PlayerData)
-  stw r3,0x69(REG_Buffer)
+  stw r3,0x6D(REG_Buffer)
 
   # ECB left edge, y coord
   lwz r3,0x790(REG_PlayerData)
-  stw r3,0x6D(REG_Buffer)
+  stw r3,0x71(REG_Buffer)
 
   # FoD Platforms
   # Load the current stage id from the static match block
@@ -201,8 +207,8 @@ backup
   # We're not on FoD, so zero out the platform locations
   #  then branch away
   load r4 0x00000000
-  stw r4, 0x71(REG_Buffer)
   stw r4, 0x75(REG_Buffer)
+  stw r4, 0x79(REG_Buffer)
   b Read_Platforms_Done
 
 Read_Platforms:
@@ -210,14 +216,15 @@ Read_Platforms:
   load r4 0x804d64b8
   lwz r4, 0(r4)
   lwz r4, 0x0c(r4)
-  stw r4, 0x71(REG_Buffer)
+  stw r4, 0x75(REG_Buffer)
 
   # FoD right platform
   load r4 0x804d64b8
   lwz r4, 0(r4)
   lwz r4, 0x3c(r4)
-  stw r4, 0x75(REG_Buffer)
+  stw r4, 0x79(REG_Buffer)
 Read_Platforms_Done:
+
 
 #------------- Increment Buffer Offset ------------
   lwz REG_BufferOffset,bufferOffset(r13)
